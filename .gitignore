@@ -24,3 +24,6 @@ hs_err_pid*
 # IDEA Customization Files #
 *.iml
 .idea/*
+
+# Maven Generated Files #
+target/*
