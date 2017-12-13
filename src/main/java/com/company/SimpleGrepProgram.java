@@ -1,23 +1,30 @@
 package com.company;
 
 import java.io.*;
-import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class SimpleGrepProgram {
     private String key;
-    private Scanner scanner;
-    private String SOURCE_FILE_NAME = "/home/roodo/IdeaProjects/SimpleGrepProgram/SourceFile.txt";
+    private String fileName;
+    private boolean fileLinesToLowerCase = false;
 
-    private void ReadFromConsole() {
-        System.out.println("Please enter keyword!");
-        this.scanner = new Scanner(System.in);
-        this.key = scanner.nextLine();
+    private SimpleGrepProgram(String[] args) {
+        isArgsAmountCorrect(args);
+        this.key = args[args.length - 2];
+        this.fileName = args[args.length-1];
+        caseIgnore(args[0], args.length);
     }
 
-    private void setFilePath() {
-        System.out.println("Do you want set path to source file? (Y or N)");
-        if(this.scanner.nextLine().toUpperCase().equals("Y")) {
-            SOURCE_FILE_NAME = this.scanner.nextLine();
+    private void isArgsAmountCorrect(String[] args) {
+        if(args.length < 1 || args.length > 3) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    private  void caseIgnore(String arg, int argsLength) {
+        if((arg.equalsIgnoreCase("-i")) && (argsLength == 3)) {
+            this.key = this.key.toLowerCase();
+            fileLinesToLowerCase = true;
         }
     }
 
@@ -26,9 +33,12 @@ public class SimpleGrepProgram {
 
         try(BufferedReader reader = new BufferedReader(
                 new InputStreamReader(
-                        new FileInputStream(SOURCE_FILE_NAME)))){
+                        new FileInputStream(fileName)))){
 
             while((line = reader.readLine()) != null) {
+                if (fileLinesToLowerCase) {
+                    line = line.toLowerCase();
+                }
                 if(line.contains(key)) {
                     System.out.println(line);
                 }
@@ -40,10 +50,8 @@ public class SimpleGrepProgram {
     }
 
     public static void main(String[] args) {
-        SimpleGrepProgram simpleGrepProgram = new SimpleGrepProgram();
+        SimpleGrepProgram simpleGrepProgram = new SimpleGrepProgram(args);
 
-        simpleGrepProgram.ReadFromConsole();
-        simpleGrepProgram.setFilePath();
         simpleGrepProgram.grep();
     }
 }
