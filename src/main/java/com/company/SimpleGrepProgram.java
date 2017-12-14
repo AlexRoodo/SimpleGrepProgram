@@ -1,57 +1,98 @@
 package com.company;
 
 import java.io.*;
-import java.util.regex.Pattern;
+import java.util.regex.*;
 
 public class SimpleGrepProgram {
     private String key;
     private String fileName;
-    private boolean fileLinesToLowerCase = false;
+    private boolean hasCaseIgnoringParameter = false;
+    private static String programUsageMessage = "Correct usage: [-i] pattern file";
 
-    private SimpleGrepProgram(String[] args) {
-        isArgsAmountCorrect(args);
-        this.key = args[args.length - 2];
-        this.fileName = args[args.length-1];
-        caseIgnore(args[0], args.length);
+
+    public static void argsCheck(String args[]) {
+        try {
+            isArgsAmountCorrect(args);
+        } catch(IllegalArgumentException e) {
+            hasException();
+        }
     }
 
-    private void isArgsAmountCorrect(String[] args) {
-        if(args.length < 1 || args.length > 3) {
-            throw new IllegalArgumentException();
+
+    SimpleGrepProgram(String[] args) {
+        this.key = args[args.length - 2];
+        this.fileName = args[args.length-1];
+        try {
+            caseIgnore(args[0], args.length);
+        } catch (IllegalArgumentException e) {
+            hasException();
         }
+    }
+
+    private static void isArgsAmountCorrect(String[] args) {
+        if(args.length < 1 || args.length > 3) {
+            throw new IllegalArgumentException(programUsageMessage);
+        }
+    }
+
+    private static void hasException() {
+        System.out.println(programUsageMessage);
+        System.exit(1);
     }
 
     private  void caseIgnore(String arg, int argsLength) {
-        if((arg.equalsIgnoreCase("-i")) && (argsLength == 3)) {
+        if(arg.equalsIgnoreCase("-i")) {
             this.key = this.key.toLowerCase();
-            fileLinesToLowerCase = true;
+            hasCaseIgnoringParameter = true;
+        } else if (argsLength == 3) {
+            throw new IllegalArgumentException(programUsageMessage);
         }
     }
 
-    private void grep () {
+
+    public void grep() {
         String line;
+        String comparedLine;
+        Pattern pattern = Pattern.compile(key);
 
         try(BufferedReader reader = new BufferedReader(
                 new InputStreamReader(
                         new FileInputStream(fileName)))){
 
             while((line = reader.readLine()) != null) {
-                if (fileLinesToLowerCase) {
-                    line = line.toLowerCase();
-                }
-                if(line.contains(key)) {
+                comparedLine = fileLinePreparedForCompare(line);
+                if(comparedLineHasMatch(comparedLine, pattern)) {
                     System.out.println(line);
                 }
             }
-
         } catch (IOException exc) {
             exc.printStackTrace();
         }
     }
 
-    public static void main(String[] args) {
-        SimpleGrepProgram simpleGrepProgram = new SimpleGrepProgram(args);
+    private String fileLinePreparedForCompare(String line) {
+        if (hasCaseIgnoringParameter) {
+            return line.toLowerCase();
+        } else {
+            return line;
+        }
+    }
 
-        simpleGrepProgram.grep();
+    private boolean comparedLineHasMatch(String comparedLine, Pattern pattern) {
+        String[] words = comparedLine.split(" ");
+        return lookForMatches(words, pattern);
+    }
+
+    private boolean lookForMatches(String[] words, Pattern pattern) {
+        Matcher matcher;
+        boolean matchFound = false;
+        for(String w: words) {
+            matcher = pattern.matcher(w);
+            if(matcher.matches()) {
+                matchFound = true;
+                break;
+            }
+        }
+        return matchFound;
     }
 }
